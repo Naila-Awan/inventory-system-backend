@@ -1,6 +1,6 @@
 // models/Cart.js
 import { DataTypes } from "sequelize";
-import sequelize from "../config/database.js"; // adjust to your DB config
+import sequelize from "../config/database.js";
 const Cart = sequelize.define("Cart", {
   id: {
     type: DataTypes.UUID,
@@ -28,7 +28,7 @@ const Cart = sequelize.define("Cart", {
     allowNull: false
   }
 }, {
-  tableName: "cart",
+  tableName: "Cart",
   timestamps: true
 });
 

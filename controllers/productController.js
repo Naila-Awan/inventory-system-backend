@@ -1,4 +1,5 @@
 import models from '../models/index.js';
+import { Op } from 'sequelize';
 
 const { Product, User, Category } = models;
 
@@ -6,19 +7,78 @@ const { Product, User, Category } = models;
 // Get all products with creator and category info
 export const getAllproducts = async (req, res) => {
     try {
-        const products = await Product.findAll({
+        const {
+            category,           
+            minPrice,
+            maxPrice,
+            sortBy,            
+            order = 'asc',     
+            search,            
+            page = 1,
+            limit = 10
+        } = req.query;
+
+        const where = {};
+
+        if (category) {
+            const catObj = await Category.findOne({
+                where: isNaN(category) ? { slug: category } : { id: category }
+            });
+            if (catObj) {
+                where.categoryId = catObj.id;
+            } else {
+                return res.json({ products: [], total: 0, page: Number(page), pages: 0 });
+            }
+        }
+
+        if (minPrice || maxPrice) {
+            where.price = {};
+            if (minPrice) where.price[Op.gte] = Number(minPrice);
+            if (maxPrice) where.price[Op.lte] = Number(maxPrice);
+        }
+
+        if (search) {
+            where[Op.or] = [
+                { title: { [Op.iLike]: `%${search}%` } },
+                { description: { [Op.iLike]: `%${search}%` } }
+            ];
+        }
+
+        let orderArr = [];
+        if (sortBy === 'price') {
+            orderArr.push(['price', order.toUpperCase()]);
+        } else if (sortBy === 'rating') {
+            orderArr.push(['rating_rate', order.toUpperCase()]);
+        } else {
+            orderArr.push(['createdAt', 'DESC']);
+        }
+
+        const offset = (Number(page) - 1) * Number(limit);
+
+        const { rows: products, count: total } = await Product.findAndCountAll({
+            where,
             include: [
                 { model: User, as: 'creator', attributes: ['id', 'name', 'email'] },
                 { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }
-            ]
+            ],
+            order: orderArr,
+            offset,
+            limit: Number(limit)
         });
-        res.json(products);
+
+        res.json({
+            products,
+            total,
+            page: Number(page),
+            pages: Math.ceil(total / Number(limit))
+        });
+
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: 'Failed to fetch products.' });
     }
 };
 
-// Get product by ID with creator and category info
 export const getProductById = async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id, {
@@ -59,7 +119,6 @@ export const addProduct = async (req, res) => {
             createdBy
         });
 
-        // Fetch with associations for response
         const newProduct = await Product.findByPk(product.id, {
             include: [
                 { model: User, as: 'creator', attributes: ['id', 'name', 'email'] },
@@ -74,7 +133,6 @@ export const addProduct = async (req, res) => {
     }
 }
 
-// Update product by ID
 export const updateProduct = async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id);
@@ -86,7 +144,6 @@ export const updateProduct = async (req, res) => {
     }
 };
 
-// Delete product by ID
 export const deleteProduct = async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id);

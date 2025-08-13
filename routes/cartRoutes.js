@@ -1,4 +1,5 @@
 import e from "express";
+import { addItemToCart, getCartItems, deleteItemFromCart } from "../controllers/cartController.js";
 import authorize from "../middlewares/authorize.js";
 
 const router = e.Router();
