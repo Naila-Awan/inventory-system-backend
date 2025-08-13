@@ -1,6 +1,7 @@
-import Product from '../models/product.model.js';
-import User from '../models/user.model.js';
-import Category from '../models/category.model.js';
+import models from '../models/index.js';
+
+const { Product, User, Category } = models;
+
 
 // Get all products with creator and category info
 export const getAllproducts = async (req, res) => {

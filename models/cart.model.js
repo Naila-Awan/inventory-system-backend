@@ -1,9 +1,6 @@
 // models/Cart.js
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js"; // adjust to your DB config
-import Product from "./Product.js";
-import User from "./User.js";
-
 const Cart = sequelize.define("Cart", {
   id: {
     type: DataTypes.UUID,

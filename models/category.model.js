@@ -11,8 +11,9 @@ const Category = sequelize.define('Category', {
     scopes: { withSlug: { attributes: {} } }
 });
 
-Category.beforeSave((cat) => {
-    if (cat.changed('name')) {
+// Always set slug before validation, both on create and update
+Category.beforeValidate((cat) => {
+    if (cat.name) {
         cat.slug = slugify(cat.name, { lower: true, strict: true });
     }
 });

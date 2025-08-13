@@ -1,9 +1,8 @@
-import Category from "../models/category.model.js";
-import slugify from "slugify";
+import models from '../models/index.js';
+import slugify from 'slugify';
 
-/**
- * Get all categories
- */
+const { Category } = models;
+
 export const getAllCategories = async (req, res) => {
     try {
         const categories = await Category.findAll({ order: [["createdAt", "DESC"]] });
@@ -19,9 +18,6 @@ export const getAllCategories = async (req, res) => {
     }
 };
 
-/**
- * Add a new category
- */
 export const addCategory = async (req, res) => {
     const { name } = req.body;
 
@@ -48,9 +44,6 @@ export const addCategory = async (req, res) => {
     }
 };
 
-/**
- * Update category by slug
- */
 export const updateCategory = async (req, res) => {
     const { slug } = req.params;
     const { name } = req.body;
@@ -67,6 +60,7 @@ export const updateCategory = async (req, res) => {
         }
 
         category.name = name;
+        category.slug = slugify(name, { lower: true, strict: true }); // Manually update slug
         await category.save();
 
         res.status(200).json({
@@ -80,9 +74,6 @@ export const updateCategory = async (req, res) => {
     }
 };
 
-/**
- * Delete category by slug
- */
 export const deleteCategory = async (req, res) => {
     const { slug } = req.params;
 
