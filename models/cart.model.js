@@ -9,23 +9,32 @@ const Cart = sequelize.define("Cart", {
   },
   userId: {
     type: DataTypes.UUID,
-    allowNull: false
+    allowNull: false,
+    validate: {
+      notEmpty: { msg: "userId is required" }
+    }
   },
   productId: {
     type: DataTypes.INTEGER, 
-    allowNull: false
+    allowNull: false,
+    validate: {
+      isInt: { msg: "productId must be an integer" }
+    }
   },
   quantity: {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 1,
     validate: {
-      min: 1
+      min: { args: [1], msg: "Quantity must be at least 1" }
     }
   },
   priceAtPurchase: {
     type: DataTypes.DECIMAL(10, 2),
-    allowNull: false
+    allowNull: false,
+    validate: {
+      isDecimal: { msg: "Price at purchase must be a decimal value" }
+    }
   }
 }, {
   tableName: "Cart",

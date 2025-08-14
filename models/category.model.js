@@ -4,10 +4,25 @@ import slugify from 'slugify';
 
 const Category = sequelize.define('Category', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    name: { type: DataTypes.STRING, allowNull: false, unique: true },
-    slug: { type: DataTypes.STRING, allowNull: false, unique: true }
+    name: { 
+        type: DataTypes.STRING, 
+        allowNull: false, 
+        unique: true,
+        validate: {
+            notEmpty: { msg: "Category name cannot be empty" },
+            len: { args: [2, 50], msg: "Category name must be between 2 and 50 characters" }
+        }
+    },
+    slug: { 
+        type: DataTypes.STRING, 
+        allowNull: false, 
+        unique: true,
+        validate: {
+            notEmpty: { msg: "Slug cannot be empty" }
+        }
+    }
 }, {
-    defaultScope: { attributes: { exclude: [] } }, 
+    defaultScope: { attributes: { exclude: ['slug'] } }, 
     scopes: { withSlug: { attributes: {} } }
 });
 

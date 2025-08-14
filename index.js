@@ -6,6 +6,7 @@ import sequelize from './config/database.js';
 import passport from './config/passport.js';
 
 import authenticate from './middlewares/auth.js';
+import { errorHandler } from './middlewares/errorHandler.js';
 
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -45,14 +46,16 @@ app.get('/', (req, res) => {
 */
 
 app.use('/auth', authRoutes);
+app.use('/product', productRoutes);
 
 app.use(authenticate);
 
 app.use('/user', userRoutes);
 app.use('/category', categoryRoutes);
-app.use('/product', productRoutes);
 app.use('/cart', cartRoutes);
 
 app.listen(process.env.PORT, () =>
   console.log(`Server running on port ${process.env.PORT}`)
 );
+
+app.use(errorHandler);

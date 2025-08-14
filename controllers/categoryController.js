@@ -3,32 +3,31 @@ import slugify from 'slugify';
 
 const { Category } = models;
 
-export const getAllCategories = async (req, res) => {
+export const getAllCategories = async (req, res, next) => {
     try {
         const categories = await Category.findAll({ order: [["createdAt", "DESC"]] });
 
         if (!categories.length) {
-            return res.status(404).json({ message: "No categories available." });
+            return res.status(404).json({ error: "No categories available." });
         }
 
         res.status(200).json(categories);
     } catch (error) {
-        console.error("Error fetching categories:", error);
-        res.status(500).json({ message: "Server error" });
+        next(error);
     }
 };
 
-export const addCategory = async (req, res) => {
+export const addCategory = async (req, res, next) => {
     const { name } = req.body;
 
-    try {
-        if (!name?.trim()) {
-            return res.status(400).json({ message: "Category name is required" });
-        }
+    if (!name || typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ error: "Category name is required and must be a non-empty string." });
+    }
 
+    try {
         const existingCategory = await Category.findOne({ where: { name } });
         if (existingCategory) {
-            return res.status(400).json({ message: "Category already exists." });
+            return res.status(409).json({ error: "Category already exists." });
         }
 
         const newCategory = await Category.create({ name });
@@ -39,28 +38,30 @@ export const addCategory = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error creating category:", error);
-        res.status(500).json({ message: "Server error" });
+        next(error);
     }
 };
 
-export const updateCategory = async (req, res) => {
+export const updateCategory = async (req, res, next) => {
     const { slug } = req.params;
     const { name } = req.body;
+
+    if (!slug || typeof slug !== 'string' || !slug.trim()) {
+        return res.status(400).json({ error: "Category slug is required and must be a non-empty string." });
+    }
+    if (!name || typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ error: "Category name is required and must be a non-empty string." });
+    }
 
     try {
         const category = await Category.findOne({ where: { slug } });
 
         if (!category) {
-            return res.status(404).json({ message: "Category not found" });
-        }
-
-        if (!name?.trim()) {
-            return res.status(400).json({ message: "Category name is required" });
+            return res.status(404).json({ error: "Category not found" });
         }
 
         category.name = name;
-        category.slug = slugify(name, { lower: true, strict: true }); // Manually update slug
+        category.slug = slugify(name, { lower: true, strict: true });
         await category.save();
 
         res.status(200).json({
@@ -69,19 +70,22 @@ export const updateCategory = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error updating category:", error);
-        res.status(500).json({ message: "Server error" });
+        next(error);
     }
 };
 
-export const deleteCategory = async (req, res) => {
+export const deleteCategory = async (req, res, next) => {
     const { slug } = req.params;
+
+    if (!slug || typeof slug !== 'string' || !slug.trim()) {
+        return res.status(400).json({ error: "Category slug is required and must be a non-empty string." });
+    }
 
     try {
         const category = await Category.findOne({ where: { slug } });
 
         if (!category) {
-            return res.status(404).json({ message: "Category not found" });
+            return res.status(404).json({ error: "Category not found" });
         }
 
         await category.destroy();
@@ -89,7 +93,6 @@ export const deleteCategory = async (req, res) => {
         res.status(200).json({ message: "Category deleted successfully" });
 
     } catch (error) {
-        console.error("Error deleting category:", error);
-        res.status(500).json({ message: "Server error" });
+        next(error);
     }
 };

@@ -4,18 +4,20 @@ import jwt from 'jsonwebtoken';
 
 const { User } = models;
 
-export const loginUser = async (req, res) => {
+export const loginUser = async (req, res, next) => {
   const { email, password } = req.body;
 
-  if (!email || !password)
-    return res.status(400).json({ message: 'Email and password are required' });
+  if (!email || typeof email !== 'string' || !email.trim())
+    return res.status(400).json({ error: 'Valid email is required.' });
+  if (!password || typeof password !== 'string')
+    return res.status(400).json({ error: 'Password is required.' });
 
   try {
     const user = await User.scope('withPassword').findOne({ where: { email } });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -23,25 +25,26 @@ export const loginUser = async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    res.json({ message: 'Login successful', token });
+    res.status(200).json({ message: 'Login successful', token });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    next(error);
   }
 };
 
-export const signupUser = async (req, res) => {
+export const signupUser = async (req, res, next) => {
   const { name, email, password, provider, googleId, role } = req.body;
 
+  if (!name || typeof name !== 'string' || !name.trim())
+    return res.status(400).json({ error: 'Name is required.' });
+  if (!email || typeof email !== 'string' || !email.trim())
+    return res.status(400).json({ error: 'Valid email is required.' });
   if (!password && provider !== 'google')
-    return res.status(400).json({ message: 'Password is required' });
-  if (!name || !email)
-    return res.status(400).json({ message: 'Name and email are required' });
+    return res.status(400).json({ error: 'Password is required.' });
 
   try {
     const existingUser = await User.scope('withPassword').findOne({ where: { email } });
     if (existingUser)
-      return res.status(400).json({ message: 'Email already in use.' });
+      return res.status(409).json({ error: 'Email already in use.' });
 
     const newUser = await User.create({
       name,
@@ -60,15 +63,13 @@ export const signupUser = async (req, res) => {
 
     res.status(201).json({ message: 'User registered successfully', user: newUser, token });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    next(error);
   }
 };
 
-export const googleCallback = async (req, res) => {
-  if (!req.user) return res.status(401).json({ message: 'Google login failed' });
+export const googleCallback = async (req, res, next) => {
+  if (!req.user) return res.status(401).json({ error: 'Google login failed' });
 
   const token = req.user.token;
-  console.log(token);
-  res.json({ message: 'Google login successful', user: req.user.user, token });
+  res.status(200).json({ message: 'Google login successful', user: req.user.user, token });
 };

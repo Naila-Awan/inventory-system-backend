@@ -10,13 +10,20 @@ const User = sequelize.define('User', {
     },
     name: {
         type: DataTypes.STRING, 
-        allowNull: false 
+        allowNull: false,
+        validate: {
+            notEmpty: { msg: "Name cannot be empty" },
+            len: { args: [2, 50], msg: "Name must be between 2 and 50 characters" }
+        }
     },
     email: { 
         type: DataTypes.STRING, 
         allowNull: false, 
         unique: true, 
-        validate: { isEmail: true } 
+        validate: { 
+            isEmail: { msg: "Must be a valid email" },
+            notEmpty: { msg: "Email cannot be empty" }
+        } 
     },
     password: { 
         type: DataTypes.STRING, 
@@ -28,7 +35,8 @@ const User = sequelize.define('User', {
     },
     googleId: { 
         type: DataTypes.STRING, 
-        allowNull: true },
+        allowNull: true 
+    },
     role: { 
         type: DataTypes.ENUM('admin', 'editor', 'viewer'), 
         defaultValue: 'viewer' 
