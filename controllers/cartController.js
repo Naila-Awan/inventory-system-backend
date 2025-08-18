@@ -31,6 +31,7 @@ export const addItemToCart = async (req, res, next) => {
 }
 
 export const getCartItems = async (req, res, next) => {
+    const userId = req.user?.id;
     try {
         const cartItems = await Cart.findAll({
             where: { userId },
@@ -48,17 +49,17 @@ export const getCartItems = async (req, res, next) => {
 }
 
 export const deleteItemFromCart = async (req, res, next) => {
-  const userId = req.user?.id;  
-  const { id } = req.params;    
-  try {
-    const cartItem = await Cart.findOne({ where: { userId, id } });
-    if (!cartItem) {
-      return res.status(404).json({ error: 'Item not found in cart.' });
+    const userId = req.user?.id;
+    const { id } = req.params;
+    try {
+        const cartItem = await Cart.findOne({ where: { userId, id } });
+        if (!cartItem) {
+            return res.status(404).json({ error: 'Item not found in cart.' });
+        }
+        await cartItem.destroy();
+        res.status(200).json({ message: 'Item removed from cart.' });
+    } catch (err) {
+        next(err);
     }
-    await cartItem.destroy();
-    res.status(200).json({ message: 'Item removed from cart.' });
-  } catch (err) {
-    next(err);
-  }
 };
 
