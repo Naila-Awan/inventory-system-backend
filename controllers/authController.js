@@ -5,12 +5,8 @@ import jwt from 'jsonwebtoken';
 const { User } = models;
 
 export const loginUser = async (req, res, next) => {
-  const { email, password } = req.body;
 
-  if (!email || typeof email !== 'string' || !email.trim())
-    return res.status(400).json({ error: 'Valid email is required.' });
-  if (!password || typeof password !== 'string')
-    return res.status(400).json({ error: 'Password is required.' });
+  const { email, password } = req.body;
 
   try {
     const user = await User.scope('withPassword').findOne({ where: { email } });
@@ -25,7 +21,7 @@ export const loginUser = async (req, res, next) => {
       { expiresIn: '1h' }
     );
 
-    res.status(200).json({ message: 'Login successful', token });
+    res.status(200).json({ message: 'Login successful', user: user, token });
   } catch (error) {
     next(error);
   }
@@ -33,14 +29,6 @@ export const loginUser = async (req, res, next) => {
 
 export const signupUser = async (req, res, next) => {
   const { name, email, password, provider, googleId, role } = req.body;
-
-  if (!name || typeof name !== 'string' || !name.trim())
-    return res.status(400).json({ error: 'Name is required.' });
-  if (!email || typeof email !== 'string' || !email.trim())
-    return res.status(400).json({ error: 'Valid email is required.' });
-  if (!password && provider !== 'google')
-    return res.status(400).json({ error: 'Password is required.' });
-
   try {
     const existingUser = await User.scope('withPassword').findOne({ where: { email } });
     if (existingUser)
@@ -55,13 +43,7 @@ export const signupUser = async (req, res, next) => {
       role: role || 'viewer'
     });
 
-    const token = jwt.sign(
-      { id: newUser.id, role: newUser.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    res.status(201).json({ message: 'User registered successfully', user: newUser, token });
+  res.status(201).json({ message: 'User registered successfully', user: newUser });
   } catch (error) {
     next(error);
   }
@@ -71,5 +53,6 @@ export const googleCallback = async (req, res, next) => {
   if (!req.user) return res.status(401).json({ error: 'Google login failed' });
 
   const token = req.user.token;
-  res.status(200).json({ message: 'Google login successful', user: req.user.user, token });
+  const frontendUrl = process.env.FRONTEND_URL;
+  res.redirect(`${frontendUrl}/products?token=${token}`);
 };

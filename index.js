@@ -1,8 +1,10 @@
 import express from 'express';
+import cors from 'cors';
 import session from 'express-session';
 import { config as configDotenv } from 'dotenv';
 
 import sequelize from './config/database.js';
+import { seedAdmin } from './seeders/adminSeeder.js';
 import passport from './config/passport.js';
 
 import authenticate from './middlewares/auth.js';
@@ -16,16 +18,23 @@ import cartRoutes from './routes/cartRoutes.js';
 
 configDotenv();
 
+
 try {
   await sequelize.authenticate();
   console.log('Database connected.');
   await sequelize.sync();
+  await seedAdmin();
 } catch (err) {
   console.error('DB connection error:', err);
 }
 
+
 const app = express();
 
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -46,13 +55,13 @@ app.get('/', (req, res) => {
 */
 
 app.use('/auth', authRoutes);
-app.use('/product', productRoutes);
 
 app.use(authenticate);
 
 app.use('/user', userRoutes);
 app.use('/category', categoryRoutes);
 app.use('/cart', cartRoutes);
+app.use('/product', productRoutes);
 
 app.listen(process.env.PORT, () =>
   console.log(`Server running on port ${process.env.PORT}`)
